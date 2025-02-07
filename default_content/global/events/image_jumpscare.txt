@@ -1,0 +1,4 @@
+v1 is the image
+v2 is how much it'll wait before it disappears
+
+remember to edit the 0.1 value (or whatever the fuck) in the code

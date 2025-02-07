@@ -1,0 +1,49 @@
+// TODO: make this an official modifier in troll engine
+
+
+function getName()
+	return "digital";
+
+
+function getModType()
+	return NOTE_MOD;
+
+function getSubmods(){
+    return [
+        "digitalSteps",
+        "digitalOffset",
+        "digitalPeriod",
+        "digitalZ",
+        "digitalZOffset",
+        "digitalZPeriod"
+    ];
+}
+
+function getDigitalAngle(yOffset:Float, offset:Float, period:Float){
+    return Math.PI * (yOffset + (1 * offset) ) / (Note.swagWidth + (period * Note.swagWidth) );
+}
+
+
+function getPos(visualDiff:Float, timeDiff:Float, beat:Float, pos:Vector3, data:Int, player:Int, obj:NoteObject, field:NoteField)
+{
+    var steps = this.getSubmodValue("digitalSteps", player) + 1;
+    var period = this.getSubmodValue("digitalOffset", player);
+    var offset = this.getSubmodValue("digitalPeriod", player);
+
+
+    var stepsZ = this.getSubmodValue("digitalZSteps", player) + 1;
+    var periodZ = this.getSubmodValue("digitalZOffset", player);
+    var offsetZ = this.getSubmodValue("digitalZPeriod", player);
+
+    var value = this.getValue(player);
+    var valueZ = this.getSubmodValue("digitalZ", player);
+
+    if(value != 0)
+        pos.x += (value * Note.swagWidth * 0.5) * Math.floor(0.5 + (steps * FlxMath.fastSin(getDigitalAngle(visualDiff, offset, period)))) / steps;
+	
+    if(valueZ != 0)
+        pos.z += (valueZ * Note.swagWidth * 0.5) * Math.floor(0.5 + (stepsZ * FlxMath.fastSin(getDigitalAngle(visualDiff, offsetZ, periodZ)))) / stepsZ;
+    
+    return pos;
+}
+

@@ -1,0 +1,721 @@
+import flixel.math.FlxMath;
+import openfl.filters.ShaderFilter;
+import openfl.Lib;
+
+// TRIVIA: 
+// In Bloodlust, I thought it would be cool to include what bf looked like during the forest illusion as a little secret, I never intended him to be anything more.
+// Upon discovery, Pincer asked if they could adopt the creature, I had no other plans for the design, so it was cool with me. :ok_hand:
+// Pincer made some additions to the design seen in bloodlust (horn n tail etc) [i think the og design is still in the files, he looks kind of naked without them now LOL]
+// Pincer gave them the name ‘Falsethorn', which is very fitting considering the whole tree theming + fake boyfriend.
+// Some time later, Pincer pitched the idea of Corruption:IF and Pretence to me, and I liked it!
+// Falsethorn can now be more than just a single use throw away character....
+// he is now a 2 use throw away character.....
+
+var video; // black hole
+var video2; // wave efx
+var video3; // snow
+
+var game = PlayState.instance;
+
+var object:FlxSprite;
+
+var forest:FlxSpriteGroup;
+var spotlight:FlxSprite;
+
+var ftBf:Character;
+var scopeVin:FlxSprite;
+
+var idleCamPosX:Float = 300;
+var idleCamPosY:Float = -450;
+var camIdleTime:Bool = true;
+
+var hurtVin:FlxSprite;
+var hurtBlack:FlxSprite;
+
+var hurtAmount:Float = 0;
+var hurtAmountBlack:Float = 0; // vary them for cooler effect
+
+var ftIcons:FlxSpriteGroup;
+
+var overlay = newShader("overlay");
+var arrT:Array<Float> = [255.0,0.0,223.0];   //75.0,26.0,233.0 blue
+var arrR:Array<Float> = [75.0, 0.0, 255.0];
+var poses:Array<Float> = [0.5,-0.15];
+var amtt:Float = 0.075;  //075
+var trans:Bool = false;
+overlay.data.rT.value = [arrT[0]/255];
+overlay.data.gT.value = [arrT[1]/255];
+overlay.data.bT.value = [arrT[2]/255];
+overlay.data.rR.value = [arrR[0]/255];
+overlay.data.gR.value = [arrR[1]/255];
+overlay.data.bR.value = [arrR[2]/255];
+overlay.data.ypos.value = [poses[1]];
+overlay.data.xpos.value = [poses[0]];
+overlay.data.amt.value = [amtt];
+overlay.data.trans.value = [trans];
+
+var iconAlpha:Float = 0;
+
+var lens:Shader;
+var hasGameOvered:Bool = false;
+
+function onEndSong(){
+    video.destroy();
+    video2.destroy();
+    video3.destroy();
+}
+
+function onCreate(){
+    FlxSprite.defaultAntialiasing = true;
+
+    game.skipCountdown = true;
+
+    game.introSnds = [null,null,null,null];
+    game.introAlts = [null,null,null,null];
+	
+}
+
+function reloadHealthBarColors(hud, dC, bC){ // Forces red/green HP bar
+	hud.reloadHealthBarColors(0xFFFF0000, 0xFF00FF00);
+	return Function_Stop;
+}
+
+
+function onCreatePost() {
+    //game.camZoomingMult = 0;
+    game.zoomEveryBeat = 0;
+    game.instaRespawn = true;
+    
+    game.boyfriend.alpha = 0;
+
+    game.dadField.noteField.visible = false;
+    
+    //game.boyfriend.flipX = false;
+    game.addCharacterToList("falsethorn", 1);
+    //game.addCharacterToList("momFront", 1);
+    //game.addCharacterToList("momFrontSecond", 1);
+   // game.addCharacterToList("gfNorm", 0);
+    //game.addCharacterToList("momCorrupt", 1);
+    //game.addCharacterToList("gfDark", 0);
+
+    addStreetShit();
+
+    forest = new FlxSpriteGroup();
+    game.addBehindDad(forest);
+    addForestShit();
+
+    lens = Paths.getShader("lens");
+    lens.data.iTime.value = [0.0];
+    lens.data.ushaderStrength.value = [0.10];
+
+    ftBf = new Character(-15,-540, 'ftBf');
+    game.startCharacter(ftBf, true);
+    ftBf.scrollFactor = game.dad.scrollFactor;
+    game.add(ftBf);
+    ftBf.setPosition(-15,-540);
+
+    game.camGame.setFilters([new ShaderFilter(overlay), new ShaderFilter(lens)]);
+
+    ftBf.alpha = 1;
+
+    forest.alpha = 0;
+    game.dad.alpha = 0;
+
+    scopeVin = new FlxSprite();
+    scopeVin.frames = Paths.getSparrowAtlas('scopeVin');
+    scopeVin.animation.addByPrefix("idle", 'scopeVin idle', 20, true);
+    scopeVin.animation.play("idle", true);
+    scopeVin.scrollFactor.set(0,0);
+    scopeVin.scale.set(1.6,1.61);
+    scopeVin.antialiasing = true;
+    scopeVin.alpha = 0;
+    scopeVin.blend = 0;
+    scopeVin.cameras = [game.camOverlay];
+    game.add(scopeVin);
+	scopeVin.setPosition(241,135);
+
+    video2 = new MP4Sprite();
+    video2.bitmap.onFormatSetup.add(function():Void
+    {
+        video2.scale.set(1,1);
+        video2.scrollFactor.set(0,0);
+        video2.setPosition(0,0);
+    });
+    video2.bitmap.onEndReached.add(video2.destroy);
+    game.add(video2);
+    video.blend = 0;
+
+    video2.load(Paths.video('waveEffect'), [':input-repeat=65545']);
+    video2.play();
+    video2.alpha = 0;
+    video2.cameras = [game.camOverlay];
+
+    video3 = new MP4Sprite();
+    video3.bitmap.onFormatSetup.add(function():Void
+    {
+        video3.scale.set(1.1,1.1);
+        video3.scrollFactor.set(0,0);
+        video3.setPosition(3,4);
+    });
+    video3.bitmap.onEndReached.add(video3.destroy);
+    game.add(video3);
+    video3.blend = 0;
+
+    video3.load(Paths.video('snow light'), [':input-repeat=65545']);
+    video3.play();
+    video3.alpha = 1;
+    video3.cameras = [game.camOverlay];
+
+    //game.boyfriend.setPosition(315,-550);
+    game.customCamera.set(idleCamPosX,idleCamPosY);
+    game.addCameraPoint(game.customCamera);
+    //camFollowPos(game.boyfriend.x, game.boyfriend.y);
+
+    hurtVin = new FlxSprite(-300,-170).loadGraphic(Paths.image('hurtVin'));
+    hurtVin.scale.set(0.7,0.7);
+    hurtVin.antialiasing = false;
+    hurtVin.scrollFactor.set(0, 0);
+    hurtVin.active = false;
+    hurtVin.alpha = 0;
+	hurtVin.blend = 9;
+	hurtVin.cameras = [game.camOverlay];
+	game.add(hurtVin);
+
+	hurtBlack = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.BLACK);
+    hurtBlack.scale.set(1280 * 3, 720 * 3);
+	hurtBlack.updateHitbox();
+    hurtBlack.scrollFactor.set(0,0);
+	hurtBlack.screenCenter();
+    hurtBlack.alpha = 0;
+	hurtBlack.blend = 9;
+    game.add(hurtBlack);
+
+    lowVin = new FlxSprite(-300,-170).loadGraphic(Paths.image('lowHealth'));
+    lowVin.scale.set(0.7,0.7);
+    lowVin.antialiasing = true;
+    lowVin.scrollFactor.set(0, 0);
+    lowVin.alpha = 0;
+    lowVin.screenCenter();
+	lowVin.blend = 0;
+	lowVin.cameras = [game.camOverlay];
+	game.add(lowVin);
+
+    object = scopeVin;
+
+    ftIcons = new FlxSpriteGroup();
+    game.add(ftIcons);
+    ftIcons.cameras = [game.camHUD];
+
+    var ft1 = new FlxSprite(0,0).loadGraphic(Paths.image('icons/falsethorn1'));
+    ft1.scale.set(1,1);
+    ft1.scrollFactor.set(0, 0);
+    ft1.alpha = 1;
+	ftIcons.add(ft1);
+
+    var ft2 = new FlxSprite(0,0).loadGraphic(Paths.image('icons/falsethorn2'));
+    ft2.scale.set(1,1);
+    ft2.scrollFactor.set(0, 0);
+    ft2.alpha = 1;
+	ftIcons.add(ft2);
+
+    game.hud.iconP1.alpha = 0;
+
+    iconAlpha = 0;
+
+    gfIcon = new Character(0,0, 'gfIcon');
+    game.startCharacter(gfIcon, true);
+	gfIcon.voicelining = true;
+    gfIcon.cameras = [game.camHUD];
+    
+    gfIcon.scrollFactor.set(0,0);
+    game.add(gfIcon);
+
+    game.boyfriend.setOnScripts("clone", gfIcon); 
+
+    var blackTop = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.BLACK);
+    blackTop.scale.set(1280 * 3, 720 * 3);
+	blackTop.updateHitbox();
+    blackTop.scrollFactor.set(0,0);
+	blackTop.screenCenter();
+    blackTop.alpha = 1;
+    game.add(blackTop);
+    FlxTween.tween(blackTop, {alpha: 0}, 2);
+}
+
+var timer:Float = 0;
+var iconOffsetX:Float = -130;
+var iconOffsetY:Float = 145;
+
+function onUpdate(elapsed){
+
+    ftIcons.setPosition(game.hud.iconP2.x, game.hud.iconP2.y);
+    ftIcons.scale.set(game.hud.iconP2.scale.x, game.hud.iconP2.scale.y);
+
+    gfIcon.setPosition(game.hud.iconP1.x + iconOffsetX, game.hud.iconP1.y + iconOffsetY);
+    gfIcon.scale.set(game.hud.iconP1.scale.x, game.hud.iconP1.scale.y);
+
+    if (game.health > 1.6){
+        ftIcons.members[0].alpha = 0;
+        ftIcons.members[1].alpha = iconAlpha;
+    } else {
+        ftIcons.members[0].alpha = iconAlpha;
+        ftIcons.members[1].alpha = 0;
+    }
+
+    if (hurtAmount > 0){
+        hurtAmount -= 0.2 * elapsed;
+    } else if (hurtAmount < 0){
+        hurtAmount = 0;
+    }
+
+    if (!hasGameOvered){
+        if (game.health <= 0.4){
+            if (lowVin.alpha < 0.8){
+                lowVin.alpha += 0.4 * elapsed;
+            } else {
+                lowVin.alpha = 0.8;
+            }
+        } else {
+            if (lowVin.alpha > 0){
+                lowVin.alpha -= 0.4 * elapsed;
+            }
+        }
+    }
+    
+
+	if (hurtAmountBlack > 0){
+        hurtAmountBlack -= 0.4 * elapsed;
+    } else if (hurtAmountBlack < 0){
+        hurtAmountBlack = 0;
+    }
+
+    hurtVin.alpha = hurtAmount;
+	hurtBlack.alpha = hurtAmountBlack;
+
+    if (game.boyfriend.animation.curAnim.name == 'idle' && !camIdleTime){
+       camIdleTime = true;
+        game.customCamera.set(idleCamPosX,idleCamPosY);
+        game.addCameraPoint(game.customCamera);
+    }
+
+    ftBf.animTimer = game.dad.animTimer;
+    ftBf.holdTimer= game.dad.holdTimer;
+    ftBf.skipDance= game.dad.skipDance;
+}
+
+function onReceptorGeneration(){
+    game.remove(game.ratingGroup, true);
+    //game.insert(game.members.indexOf(runIdle) - 1, game.ratingGroup);
+}
+
+function opponentNoteHit(note:Note, field:PlayField){
+    switch (note.noteData){
+        case 0:
+            ftBf.playAnim("singLEFT",true);
+        case 1:
+            ftBf.playAnim("singDOWN",true);
+        case 2:
+            ftBf.playAnim("singUP",true);
+        case 3:
+            ftBf.playAnim("singRIGHT",true);
+    }
+}
+
+function noteMiss(note:Note, field:PlayField){
+    hurtAmount += 0.2;
+	hurtAmountBlack += 0.2;
+}
+
+function noteMissPress(direction:Int){
+    hurtAmount += 0.2;
+	hurtAmountBlack += 0.2;
+}
+
+function addForestShit(){
+    var layer0 = new FlxSprite(-340,-245).loadGraphic(Paths.image('forestlayer0'));
+    layer0.scale.set(0.6,0.6);
+    layer0.antialiasing = true;
+    forest.add(layer0);
+    layer0.scrollFactor.set(0, 0);
+
+    video = new MP4Sprite();
+    video.bitmap.onFormatSetup.add(function():Void
+    {
+        video.scale.set(0.9,0.9);
+        video.updateHitbox();
+        video.scrollFactor.set(0,0);
+        video.setPosition(0,-20);
+        video.screenCenter();
+    });
+    video.bitmap.onEndReached.add(video.destroy);
+    forest.add(video);
+
+    video.load(Paths.video('blackhole'), [':input-repeat=65545']);
+    video.play();
+    video.alpha = 1;
+
+    var layer05 = new FlxSprite(-200,-25).loadGraphic(Paths.image('forestlayer05'));
+    layer05.scale.set(0.8,0.7);
+    layer05.antialiasing = true;
+    forest.add(layer05);
+    FlxTween.tween(layer05, {x: -1210}, 205.0);
+    layer05.alpha = 0.7;
+    layer05.scrollFactor.set(0, 0);
+    layer05.blend = 0;
+
+    var layer1 = new FlxSprite(-397,-585).loadGraphic(Paths.image('forestlayer1'));
+    layer1.scale.set(0.7,0.7);
+    layer1.antialiasing = true;
+    forest.add(layer1);
+    layer1.scrollFactor.set(0.2, 0.4);
+
+    var layer2 = new FlxSprite(-500,-630).loadGraphic(Paths.image('forestlayer2'));
+    layer2.scale.set(0.7,0.7);
+    layer2.antialiasing = true;
+    forest.add(layer2);
+    layer2.scrollFactor.set(0.5, 0.5);
+
+    var layer3 = new FlxSprite(-568,-948).loadGraphic(Paths.image('forestlayer3'));
+    layer3.scale.set(1.1,1.1);
+    layer3.antialiasing = true;
+    forest.add(layer3);
+    layer3.scrollFactor.set(0.7, 0.8);
+
+    var layer4 = new FlxSprite(-632,-1010).loadGraphic(Paths.image('forestlayer4'));
+    layer4.scale.set(1.1,1.1);
+    layer4.antialiasing = true;
+    forest.add(layer4);
+    layer4.scrollFactor.set(0.9, 0.9);
+
+    var shadow = new FlxSprite(100,-230).loadGraphic(Paths.image('shadow'));
+    shadow.scale.set(1.2, 1.2);
+    shadow.antialiasing = true;
+    forest.add(shadow);
+    shadow.scrollFactor.set(0.9, 0.9);
+}
+
+function addStreetShit(){
+    var layer1 = new FlxSprite(-340,-485).loadGraphic(Paths.image('layer1'));
+    layer1.scale.set(0.8,0.8);
+    layer1.antialiasing = true;
+    layer1.scrollFactor.set(0, 0);
+    game.addBehindDad(layer1);
+
+    var layer2 = new FlxSprite(-470,-970).loadGraphic(Paths.image('layer2'));
+    layer2.scale.set(0.8,0.8);
+    layer2.antialiasing = true;
+    layer2.scrollFactor.set(0.4, 0.8);
+    game.addBehindDad(layer2);
+
+    var layer3 = new FlxSprite(-620,-1040).loadGraphic(Paths.image('layer3'));
+    layer3.scale.set(1.2, 1.2);
+    layer3.antialiasing = true;
+    layer3.scrollFactor.set(0.9, 0.9);
+    game.addBehindDad(layer3);
+
+    var layer3bg = new FlxSprite(-380,-1154).loadGraphic(Paths.image('layer3bg'));
+    layer3bg.scale.set(1.7, 1.7);
+    layer3bg.antialiasing = true;
+    layer3bg.scrollFactor.set(0.2, 0.95);
+    game.addBehindDad(layer3bg);
+
+    var layer4 = new FlxSprite(-620,-1040).loadGraphic(Paths.image('layer4'));
+    layer4.scale.set(1.2, 1.2);
+    layer4.antialiasing = true;
+    layer4.scrollFactor.set(0.9, 0.9);
+    game.addBehindDad(layer4);
+
+    spotlight = new FlxSprite(-620,-1130).loadGraphic(Paths.image('layer5'));
+    spotlight.scale.set(1, 1);
+    spotlight.antialiasing = true;
+    spotlight.scrollFactor.set(0.9, 0.9);
+    game.add(spotlight);
+    spotlight.blend = 0;
+
+    spotlight.scale.set(1.4, 1.2);
+
+    var shadow = new FlxSprite(100,-230).loadGraphic(Paths.image('shadow'));
+    shadow.scale.set(1.2, 1.2);
+    shadow.antialiasing = true;
+    shadow.scrollFactor.set(0.9, 0.9);
+    game.addBehindDad(shadow);
+}
+
+function generateModchart(){
+    // fade half way
+    modManager.queueEaseFunc(192, 240, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.0, 0.5, val);
+        game.dad.alpha = FlxMath.lerp(0.0, 0.5, val);
+        iconAlpha = FlxMath.lerp(0.0, 0.5, val);
+        ftBf.alpha = FlxMath.lerp(1.0, 0.5, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(1.0, 0.5, val);
+        spotlight.alpha = FlxMath.lerp(1.0, 0.5, val);
+        scopeVin.alpha = FlxMath.lerp(0.0, 0.3, val);
+        video2.alpha = FlxMath.lerp(0.0, 0.3, val);
+        video2.alpha = FlxMath.lerp(0, 0.1, val);
+        video3.alpha = FlxMath.lerp(1.0, 0.5, val);
+    });
+
+    // fade back full
+    modManager.queueEaseFunc(248, 304, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.5, 0, val);
+        game.dad.alpha = FlxMath.lerp(0.5, 0, val);
+        iconAlpha = FlxMath.lerp(0.5, 0, val);
+        ftBf.alpha = FlxMath.lerp(0.5, 1, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0.5, 1, val);
+        video3.alpha = FlxMath.lerp(0.5, 1, val);
+        spotlight.alpha = FlxMath.lerp(0.5, 1, val);
+        scopeVin.alpha = FlxMath.lerp(0.3, 0, val);
+        video2.alpha = FlxMath.lerp(0.1, 0, val);
+    });
+
+    // fade half way
+    modManager.queueEaseFunc(314, 352, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.0, 0.5, val);
+        game.dad.alpha = FlxMath.lerp(0.0, 0.5, val);
+        iconAlpha = FlxMath.lerp(0.0, 0.5, val);
+        ftBf.alpha = FlxMath.lerp(1.0, 0.5, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(1.0, 0.5, val);
+        video3.alpha = FlxMath.lerp(1.0, 0.5, val);
+        spotlight.alpha = FlxMath.lerp(1.0, 0.5, val);
+        scopeVin.alpha = FlxMath.lerp(0.0, 0.3, val);
+        video2.alpha = FlxMath.lerp(0, 0.1, val);
+    });
+
+    // fade back 0.2
+    modManager.queueEaseFunc(353, 368, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.5, 0.2, val);
+        game.dad.alpha = FlxMath.lerp(0.5, 0.2, val);
+        iconAlpha = FlxMath.lerp(0.5, 0.2, val);
+        ftBf.alpha = FlxMath.lerp(0.5, 0.8, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0.5, 0.8, val);
+        video3.alpha = FlxMath.lerp(0.5, 0.8, val);
+        spotlight.alpha = FlxMath.lerp(0.5, 0.8, val);
+        scopeVin.alpha = FlxMath.lerp(0.3, 0.1, val);
+        video2.alpha = FlxMath.lerp(0.1, 0.05, val);
+    });
+
+    //fade full
+    modManager.queueEaseFunc(383, 388, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.2, 1, val);
+        game.dad.alpha = FlxMath.lerp(0.2, 1, val);
+        iconAlpha = FlxMath.lerp(0.2, 1, val);
+        ftBf.alpha = FlxMath.lerp(0.8, 0, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0.8, 0, val);
+        video3.alpha = FlxMath.lerp(0.8, 0, val);
+        spotlight.alpha = FlxMath.lerp(0.8, 0, val);
+        scopeVin.alpha = FlxMath.lerp(0.1, 0.6, val);
+        video2.alpha = FlxMath.lerp(0.05, 0.6, val);
+    });
+
+    modManager.queueEaseFunc(389, 400, FlxEase.quadOut, function(ev, val, step){
+        video2.alpha = FlxMath.lerp(0.6, 0.1, val);
+    });
+
+    modManager.queueEaseFunc(550, 554, FlxEase.quadInOut, function(ev, val, step){
+        game.defaultCamZoom = FlxMath.lerp(1.1, 1.341, val);
+    });
+
+    modManager.queueEaseFunc(573, 577, FlxEase.quadInOut, function(ev, val, step){
+        game.defaultCamZoom = FlxMath.lerp(1.341, 1.1, val);
+    });
+
+    modManager.queueEaseFunc(760, 776, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(1, 0, val);
+        game.dad.alpha = FlxMath.lerp(1, 0, val);
+        iconAlpha = FlxMath.lerp(1, 0, val);
+        ftBf.alpha = FlxMath.lerp(0, 1, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0, 1, val);
+        video3.alpha = FlxMath.lerp(0, 1, val);
+        spotlight.alpha = FlxMath.lerp(0, 1, val);
+        scopeVin.alpha = FlxMath.lerp(0.6, 0, val);
+        video2.alpha = FlxMath.lerp(0.1, 0, val);
+    });
+
+    modManager.queueEaseFunc(1146, 1154, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0, 1, val);
+        game.dad.alpha = FlxMath.lerp(0, 1, val);
+        iconAlpha = FlxMath.lerp(0, 1, val);
+        ftBf.alpha = FlxMath.lerp(1, 0, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(1, 0, val);
+        video3.alpha = FlxMath.lerp(1, 0, val);
+        spotlight.alpha = FlxMath.lerp(1, 0, val);
+        scopeVin.alpha = FlxMath.lerp(0, 0.6, val);
+        video2.alpha = FlxMath.lerp(0, 0.6, val);
+    });
+    
+
+    modManager.queueEaseFunc(1155, 1250, FlxEase.quadOut, function(ev, val, step){
+        video2.alpha = FlxMath.lerp(0.6, 0.1, val);
+    });
+
+    modManager.queueEaseFunc(1488, 1499, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(1, 0.75, val);
+        game.dad.alpha = FlxMath.lerp(1, 0.75, val);
+        iconAlpha = FlxMath.lerp(1, 0.75, val);
+        ftBf.alpha = FlxMath.lerp(0, 0.25, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0, 0.25, val);
+        video3.alpha = FlxMath.lerp(0, 0.25, val);
+        spotlight.alpha = FlxMath.lerp(0, 0.25, val);
+        //scopeVin.alpha = FlxMath.lerp(0.6, 0, val);
+        //video2.alpha = FlxMath.lerp(0.1, 0, val);
+    });
+
+    modManager.queueEaseFunc(1503, 1515, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.75, 1, val);
+        game.dad.alpha = FlxMath.lerp(0.75, 1, val);
+        iconAlpha = FlxMath.lerp(0.75, 1, val);
+        ftBf.alpha = FlxMath.lerp(0.25, 0, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0.25, 0, val);
+        video3.alpha = FlxMath.lerp(0.25, 0, val);
+        spotlight.alpha = FlxMath.lerp(0.25, 0, val);
+        //scopeVin.alpha = FlxMath.lerp(0, 0.6, val);
+        //video2.alpha = FlxMath.lerp(0, 0.6, val);
+    });
+
+    modManager.queueEaseFunc(1523, 1528, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(1, 0.5, val);
+        game.dad.alpha = FlxMath.lerp(1, 0.5, val);
+        iconAlpha = FlxMath.lerp(1, 0.5, val);
+        ftBf.alpha = FlxMath.lerp(0, 0.5, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0, 0.5, val);
+        video3.alpha = FlxMath.lerp(0, 0.5, val);
+        spotlight.alpha = FlxMath.lerp(0, 0.5, val);
+        scopeVin.alpha = FlxMath.lerp(0.6, 0.3, val);
+        video2.alpha = FlxMath.lerp(0.1, 0.05, val);
+    });
+
+    modManager.queueEaseFunc(1534, 1539, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(0.5, 1, val);
+        game.dad.alpha = FlxMath.lerp(0.5, 1, val);
+        iconAlpha = FlxMath.lerp(0.5, 1, val);
+        ftBf.alpha = FlxMath.lerp(0.5, 0, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0.5, 0, val);
+        video3.alpha = FlxMath.lerp(0.5, 0, val);
+        spotlight.alpha = FlxMath.lerp(0.5, 0, val);
+        scopeVin.alpha = FlxMath.lerp(0.4, 0.6, val);
+    });
+
+    modManager.queueEaseFunc(1536, 1549, FlxEase.quadOut, function(ev, val, step){
+        video2.alpha = FlxMath.lerp(0.6, 0.1, val);
+    });
+
+    modManager.queueEaseFunc(1912, 1928, FlxEase.quadInOut, function(ev, val, step){
+        forest.alpha = FlxMath.lerp(1, 0, val);
+        game.dad.alpha = FlxMath.lerp(1, 0, val);
+        iconAlpha = FlxMath.lerp(1, 0, val);
+        ftBf.alpha = FlxMath.lerp(0, 1, val);
+        game.hud.iconP2.alpha = FlxMath.lerp(0, 1, val);
+        video3.alpha = FlxMath.lerp(0, 1, val);
+        spotlight.alpha = FlxMath.lerp(0, 1, val);
+        scopeVin.alpha = FlxMath.lerp(0.6, 0, val);
+        video2.alpha = FlxMath.lerp(0.1, 0, val);
+    });
+}
+
+var dirOffset:Float = 15;
+function goodNoteHit(note:Note, field:PlayField){
+    camIdleTime = false;
+    switch (note.noteData){
+        case 0:
+            game.customCamera.set(idleCamPosX - dirOffset,idleCamPosY);
+        case 1:
+            game.customCamera.set(idleCamPosX, idleCamPosY + dirOffset);
+        case 2:
+            game.customCamera.set(idleCamPosX, idleCamPosY - dirOffset);
+        case 3:
+            game.customCamera.set(idleCamPosX + dirOffset,idleCamPosY);
+    }
+    game.addCameraPoint(game.customCamera);
+}
+
+function onGameOver(){
+    // video.pause();
+    // video2.pause();
+    // video3.pause();
+
+    // game.remove(video);
+    // game.remove(video2);
+    // game.remove(video3);
+    // game.remove(scopeVin);
+
+    if (hasGameOvered==false){
+        lowVin.alpha = 0;
+        hurtAmount = 0;
+	    hurtAmountBlack = 0;
+        
+        hasGameOvered = true;
+
+        game.camGame.setFilters([]);
+        game.camHUD.setFilters([]);
+
+        video.pause();
+        video2.pause();
+        video3.pause();
+
+        scopeVin.cameras = [game.camGame];
+        video.cameras = [game.camGame];
+        video2.cameras = [game.camGame];
+        video3.cameras = [game.camGame];
+       return Function_Stop;
+    } else {
+       return Function_Continue;
+    } 
+}
+
+function onPause(){
+    video.pause();
+    video2.pause();
+    video3.pause();
+}
+
+function onResume(){
+    video.resume();
+    video2.resume();
+    video3.resume();
+}
+
+function onDestroy(){
+    video.destroy();
+    video2.destroy();
+    video3.destroy();
+}
+
+function addOverlay(col1:Array<Float>,col2:Array<Float>,blend:Float){
+    game.camGame.setFilters([new ShaderFilter(bloom)]);
+    overlay = newShader("overlay");
+    arrT = col1;
+    arrR = col2;
+    poses = [0.5,-0.15];
+    amtt = blend;
+    trans = false;
+    overlay.data.rT.value = [arrT[0]/255];
+    overlay.data.gT.value = [arrT[1]/255];
+    overlay.data.bT.value = [arrT[2]/255];
+    overlay.data.rR.value = [arrR[0]/255];
+    overlay.data.gR.value = [arrR[1]/255];
+    overlay.data.bR.value = [arrR[2]/255];
+    overlay.data.ypos.value = [poses[1]];
+    overlay.data.xpos.value = [poses[0]];
+    overlay.data.amt.value = [amtt];
+    overlay.data.trans.value = [trans];
+    game.camGame.setFilters([new ShaderFilter(overlay), new ShaderFilter(bloom)]);
+}
+
+var storedCombo:Int = 0;
+
+function onApplyJudgmentDataPost(judgeData, diff, bot, show){
+    if(judgeData.comboBehaviour == -1)storedCombo = 0;
+}
+var playing = false;
+var alpha:Float =0.0;
+
+
+
+function onEvent(eventName, value1, value2, time){
+    if (game.endingSong == true){return;}
+    
+}
+
+var trans = false;
+

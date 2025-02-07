@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="headSelect.png">
+	<!-- Created with Adobe Animate version 22.0.1.105 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="headSelect0000" x="8" y="8" width="1085" height="441"/>
+	<SubTexture name="headSelect0001" x="8" y="8" width="1085" height="441"/>
+	<SubTexture name="headSelect0002" x="8" y="8" width="1085" height="441"/>
+	<SubTexture name="headSelect0003" x="8" y="8" width="1085" height="441"/>
+	<SubTexture name="headSelect0004" x="8" y="457" width="1085" height="441"/>
+	<SubTexture name="headSelect0005" x="8" y="457" width="1085" height="441"/>
+	<SubTexture name="headSelect0006" x="8" y="457" width="1085" height="441"/>
+	<SubTexture name="headSelect0007" x="8" y="457" width="1085" height="441"/>
+	<SubTexture name="headSelect0008" x="8" y="457" width="1085" height="441"/>
+	<SubTexture name="headSelect0009" x="8" y="906" width="1085" height="441"/>
+	<SubTexture name="headSelect0010" x="8" y="906" width="1085" height="441"/>
+	<SubTexture name="headSelect0011" x="8" y="906" width="1085" height="441"/>
+	<SubTexture name="headSelect0012" x="8" y="906" width="1085" height="441"/>
+	<SubTexture name="headSelect0013" x="8" y="906" width="1085" height="441"/>
+</TextureAtlas>

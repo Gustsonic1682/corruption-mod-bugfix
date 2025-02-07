@@ -1,0 +1,109 @@
+importClass("PlayState.RatingSprite");
+
+introSnds = [];
+introAlts = ["pixelUI/onyourmarks-pixel", 'pixelUI/ready-pixel', 'pixelUI/set-pixel', 'pixelUI/date-pixel'];
+
+var fuckywucky = newShader("fuckywucky", "", 130);
+fuckywucky.data.time.value = [250];
+fuckywucky.data.prob.value = [0.5];
+fuckywucky.data.glitchScale.value = [0.5];
+
+function makeCountdownSprite(sprImage, swagCounter, tmr){
+    var countdownSpr = new FlxSprite(0, 0, sprImage);
+    countdownSpr.scrollFactor.set();
+    countdownSpr.scale.set(6, 6);
+    countdownSpr.updateHitbox();
+    countdownSpr.cameras = [state.camHUD];
+    countdownSpr.shader = fuckywucky;
+    countdownSpr.screenCenter();
+    countdownSpr.antialiasing = false;
+    return countdownSpr;
+}
+
+
+function onUpdate(elapsed:Float){
+    fuckywucky.data.time.value[0] += elapsed * 1.5;
+}
+
+
+var pixelJudges:Array<String> = ['epic', 'sick','good','bad','shit'];
+
+function preSetupNoteSplash(){
+    this.kill();
+    return Function_Stop;
+}
+
+
+function setupHoldNoteTexture(note:Note)
+    note.alpha = 1;
+
+
+function setupNoteTexture(note:Note){
+    var GLITCH = (note.mustPress ? "" : "GLITCH");
+
+    if(note.beat >= 656)
+        GLITCH = '';
+    else if(note.beat >= 448){
+        if(note.mustPress || FlxG.random.bool(50))
+            GLITCH = 'GLITCH'
+        else if(note.noteType != 'Glitch')
+            GLITCH = '';
+    }else if(note.beat >= 348)
+        GLITCH = '';
+
+    note.extraData.set("glitched", GLITCH == 'GLITCH');
+    
+    if(note.isSustainNote)
+        note.reloadNote(note.texPrefix + GLITCH, 'NOTE_assets', note.texSuffix + 'ENDS', 'pixelUI', 4, 2);
+    else
+        note.reloadNote(note.texPrefix + GLITCH, 'NOTE_assets', note.texSuffix, 'pixelUI', 4, 5);
+
+    if(note.isSustainNote)
+        note.scale.set(4, 4);
+    else
+        note.scale.set(6, 6);
+    
+    note.updateHitbox();
+    note.alpha = 1;
+    note.antialiasing = false;
+}
+
+function setupReceptorTexture(strum:StrumNote){
+    strum.isQuant = false;
+    var lastAnim:String = null;
+    if(strum.animation.curAnim != null) lastAnim = strum.animation.curAnim.name;
+    var br:String = 'NOTE_assets';
+    if (PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1)
+        br = PlayState.SONG.arrowSkin;
+
+    if(strum.field == game.dadField)
+        br = "GLITCH" + br;
+    
+    if (ClientPrefs.noteSkin == 'Quants')
+    {
+        if (Paths.exists(Paths.getPath("images/pixelUI/QUANT" + br + ".png", "IMAGE")) || Paths.exists(Paths.modsImages("pixelUI/QUANT" + br))) {
+            br = "QUANT" + br;
+            strum.isQuant = true;
+        }
+    }
+    
+    // TODO: add an easy way to do indices for strums
+
+    var graphic = Paths.image("pixelUI/" + br);
+    
+    strum.loadGraphic(graphic, true, Math.floor(graphic.width / 4), Math.floor(graphic.height / 5));
+    strum.animation.add('static', [strum.noteData]);
+    strum.animation.add('pressed', [strum.noteData + 4, strum.noteData + 8], 12, false);
+    strum.animation.add('confirm', [strum.noteData + 12, strum.noteData + 16], 16, false);
+    strum.scale.set(6, 6);
+    strum.playAnim("static", true);
+    
+    strum.defScale.x = strum.scale.x;
+    strum.defScale.y = strum.scale.y;
+    strum.updateHitbox();
+    strum.antialiasing = false;
+    if(lastAnim != null)
+    {
+        strum.playAnim(lastAnim, true);
+    }
+}

@@ -1,0 +1,18 @@
+function setupNote(note:Note){
+    if(note.isSustainNote)
+        note.reloadNote('GLITCH', 'NOTE_assets', 'ENDS', 'pixelUI', 4, 2);
+    else
+        note.reloadNote('GLITCH', 'NOTE_assets', note.texSuffix, 'pixelUI', 4, 5);
+
+    if(note.isSustainNote)
+        note.scale.set(4, 4);
+    else
+        note.scale.set(6, 6);
+    
+    note.updateHitbox();
+    note.alpha = 1;
+    note.antialiasing = false;
+    note.extraData.set("glitched", true);
+}
+
+

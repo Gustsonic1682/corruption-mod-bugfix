@@ -1,0 +1,213 @@
+callback = function(d, md){
+	//trace("selected");
+}
+
+var selectedDiff:Int = 1;
+var selectedModDiff:Int = 2;
+
+var whichSelected:Int = 0;
+
+var black:FlxSprite;
+var SHART:FlxSprite;
+var confirm:FlxSprite;
+
+var modshart:FlxSprite;
+
+var SHARTdiff:FlxSprite;
+var modshartdiff:FlxSprite;
+
+var selectorLeft:FlxSprite;
+var selectorRight:FlxSprite;
+
+var diffCamera:FlxCamera;
+
+var canonWarn:FlxText;
+
+function onStateCreate(){
+	diffCamera = new FlxCamera();
+	diffCamera.bgColor = 0;
+	FlxG.cameras.add(diffCamera, false);
+	this.cameras = [diffCamera];
+	
+
+	if(settingStory)
+		whichSelected = 1;
+
+
+
+	black = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+	black.scale.set(1280, 720);
+	black.updateHitbox();
+	black.screenCenter();
+	black.alpha = 0.5;
+	black.cameras = [diffCamera];
+	add(black);
+
+	canonWarn = new FlxText(0,0, 1200, "Canon disables ghost-tapping and has higher health loss!", 8);
+    canonWarn.setFormat(Paths.font("VollkornRegular-ZVJEZ.ttf"), 24, 0xFFFF0000, FlxTextAlign.CENTER);
+	canonWarn.screenCenter();
+	canonWarn.visible = false;
+	canonWarn.y -= 100;
+	if(settingStory)
+    	add(canonWarn);
+
+	SHART = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/difficulty/difficulty"));
+	SHART.screenCenter();
+	SHART.x -= SHART.width / 2;
+
+	modshart = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/difficulty/modchart"));
+	modshart.screenCenter();
+	modshart.x -= modshart.width / 2;
+
+	selectorLeft = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/difficulty/selector"));
+	selectorLeft.screenCenter();
+	selectorLeft.x -= 320;
+	add(selectorLeft);
+
+	selectorRight = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/difficulty/selector"));
+	selectorRight.flipX = true;
+	selectorRight.screenCenter();
+	selectorRight.x += 280;
+	add(selectorRight);
+
+	SHARTdiff = new FlxSprite().loadGraphic(Paths.image("menus/difficulty/diffs"), true, 146, 24);
+	SHARTdiff.animation.add("easy", [0], 0);
+	SHARTdiff.animation.add("normal", [1], 0);
+	SHARTdiff.animation.add("hard", [2], 0);
+	SHARTdiff.animation.play("normal", true);
+	SHARTdiff.screenCenter();
+	SHARTdiff.x += SHART.width / 2;
+
+	modshartdiff = new FlxSprite().loadGraphic(Paths.image("menus/difficulty/moddiffs"), true, 117, 25);
+	modshartdiff.animation.add("easy", [0], 0);
+	modshartdiff.animation.add("normal", [1], 0);
+	modshartdiff.animation.add("hard", [2], 0);
+	modshartdiff.animation.play("normal", true);
+	modshartdiff.screenCenter();
+	modshartdiff.x += SHART.width / 2;
+	add(modshartdiff);
+
+	confirm = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/difficulty/confirm"));
+	confirm.screenCenter();
+	confirm.y += 200;
+	add(confirm);
+
+	selectorLeft.y = modshart.y;
+	if(settingStory){
+		modshart.y += 50;
+		modshartdiff.y += 50;
+		SHART.y -= 50;
+		selectorLeft.y = SHART.y;
+		SHARTdiff.y -= 50;
+		add(SHART);
+		add(SHARTdiff);
+	}
+
+	add(modshart);
+
+	diffCamera.alpha = 0;
+
+	addTouchPad("LEFT_FULL", "A_B");
+    addTouchPadCamera();
+
+	FlxTween.tween(diffCamera, {alpha: 1}, 1, {ease:FlxEase.quadOut});
+}
+
+var anims = ["easy", "normal", "hard"];
+
+function onUpdate(elapsed:Float){
+
+	if(!settingStory){
+		if(FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN || FlxG.keys.justPressed.W || FlxG.keys.justPressed.S ||controls.UI_UP_P || controls.UI_DOWN_P){
+			whichSelected = (whichSelected == 1 ? 2 : 1);
+			FlxG.sound.play(Paths.sound('scrollMenu'));
+		}
+			
+	}else{
+		if(FlxG.keys.justPressed.UP || FlxG.keys.justPressed.W ||controls.UI_UP_P){
+			FlxG.sound.play(Paths.sound('scrollMenu'));
+			whichSelected--;
+		}
+			
+		else if(FlxG.keys.justPressed.DOWN || FlxG.keys.justPressed.S||controls.UI_DOWN_P){
+			FlxG.sound.play(Paths.sound('scrollMenu'));
+			whichSelected++;
+		}
+			
+
+		if(whichSelected < 0)
+			whichSelected = 2;
+		else if(whichSelected > 2)
+			whichSelected = 0;
+	}
+	
+	if(FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.A ||controls.LEFT){
+		if(whichSelected == 0)
+			selectedDiff--;
+		else if(whichSelected == 1)
+			selectedModDiff--;
+		FlxG.sound.play(Paths.sound('scrollMenu'));
+	}else if(FlxG.keys.justPressed.RIGHT || FlxG.keys.justPressed.D||controls.UI_RIGHT_P){
+		if(whichSelected == 0)
+			selectedDiff++;
+		else if(whichSelected == 1)
+			selectedModDiff++;
+		FlxG.sound.play(Paths.sound('scrollMenu'));
+	}
+
+	if(selectedDiff < 0)
+		selectedDiff = 2;
+	else if(selectedDiff > 2)
+		selectedDiff = 0;
+
+	if(selectedModDiff < 0)
+		selectedModDiff = 2;
+	else if(selectedModDiff > 2)
+		selectedModDiff = 0;
+
+	trace("Object type: " + FlxMath.lerp(modshart.alpha, 0.5, elapsed * 60 * 0.3));
+
+	if(whichSelected == 0){
+		modshart.alpha = FlxMath.lerp(modshart.alpha, 0.5, elapsed * 60 * 0.3);
+		SHART.alpha = FlxMath.lerp(SHART.alpha, 1, elapsed * 60 * 0.3);
+		confirm.alpha = FlxMath.lerp(confirm.alpha, 0.5, elapsed * 60 * 0.3);
+		selectorLeft.x = FlxMath.lerp(selectorLeft.x, 305, elapsed * 60 * 0.3);
+		selectorRight.x = FlxMath.lerp(selectorRight.x, 905, elapsed * 60 * 0.3);
+		selectorLeft.y = FlxMath.lerp(selectorLeft.y, SHART.y, elapsed * 60 * 0.3);
+	}else if(whichSelected == 1){
+		modshart.alpha = FlxMath.lerp(modshart.alpha, 1, elapsed * 60 * 0.3);
+		SHART.alpha = FlxMath.lerp(SHART.alpha, 0.5, elapsed * 60 * 0.3);
+		confirm.alpha = FlxMath.lerp(confirm.alpha, 0.5, elapsed * 60 * 0.3);
+		selectorLeft.x = FlxMath.lerp(selectorLeft.x, 305, elapsed * 60 * 0.3);
+		selectorRight.x = FlxMath.lerp(selectorRight.x, 905, elapsed * 60 * 0.3);
+		selectorLeft.y = FlxMath.lerp(selectorLeft.y, modshart.y, elapsed * 60 * 0.3);
+	}else if(whichSelected == 2){
+		modshart.alpha = FlxMath.lerp(modshart.alpha, 0.5, elapsed * 60 * 0.3);
+		SHART.alpha = FlxMath.lerp(SHART.alpha, 0.5, elapsed * 60 * 0.3);
+		confirm.alpha = FlxMath.lerp(confirm.alpha, 1, elapsed * 60 * 0.3);
+		selectorLeft.x = FlxMath.lerp(selectorLeft.x, 405, elapsed * 60 * 0.3);
+		selectorRight.x = FlxMath.lerp(selectorRight.x, 845, elapsed * 60 * 0.3);
+		selectorLeft.y = FlxMath.lerp(selectorLeft.y, confirm.y, elapsed * 60 * 0.3);
+	}
+	
+	canonWarn.visible = selectedDiff == 2;
+	selectorRight.y = selectorLeft.y;
+	SHARTdiff.alpha = SHART.alpha;
+	modshartdiff.alpha = modshart.alpha;
+
+	SHARTdiff.animation.play(anims[selectedDiff], true);
+	modshartdiff.animation.play(anims[selectedModDiff], true);
+	
+	if(whichSelected == 2){
+		if(FlxG.keys.justPressed.ENTER || FlxG.keys.justPressed.SPACE || controls.ACCEPT){
+			FlxG.sound.play(Paths.sound('confirmMenu'));
+			close();
+			callback(selectedDiff, selectedModDiff);
+		}
+	}
+}
+
+function onDestroy(){
+	FlxTween.cancelTweensOf(diffCamera);
+	FlxG.cameras.remove(diffCamera, true);
+}

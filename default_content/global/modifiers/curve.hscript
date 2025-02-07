@@ -1,0 +1,27 @@
+function getName()
+	return "curve";
+
+function getModType()
+	return NOTE_MOD;
+
+function getPos(visualDiff:Float, timeDiff:Float, beat:Float, pos:Vector3, data:Int, player:Int, obj:NoteObject, field:NoteField)
+{
+
+    var offset = 0;
+    var period = 1;
+    var curve:Float = Math.abs(FlxMath.fastSin(((visualDiff + offset) / (90
+        + (period * 90)))));
+    //Math.abs(FlxMath.fastSin(((diff + (1 * (offset))) / (90 + 90 * period))));
+
+    pos.z += this.getValue(player) * Note.swagWidth * 0.5 * curve;
+	
+	return pos;
+}
+
+/* function getPos(visualDiff:Float, timeDiff:Float, beat:Float, pos:Vector3, data:Int, player:Int, obj:NoteObject, field:NoteField)
+{
+    var f = visualDiff / Note.swagWidth;
+	pos.y += this.getValue(player) * f * f;
+	
+	return pos;
+} */

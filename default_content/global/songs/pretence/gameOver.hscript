@@ -1,0 +1,157 @@
+import flixel.math.FlxMath;
+import openfl.Lib;
+import MusicBeatState;
+
+// bf game over
+
+var playVideo:Bool = true;
+game = PlayState.instance;
+var stopPause = true;
+var video:MP4Sprite;
+var object:FlxSprite;
+
+var loadAmount:Int = 0;
+var loadFloat:Float = 0.0;
+var loadRate:Float = 15.0;
+var curLoad:Int = 0;
+
+var timeSinceLastPress:Float;
+var timeWithoutPressing:Float = 2;
+
+var allowedToLoad:Bool = true;
+
+var hasEnded:Bool = false;
+var startedCutscene:Bool = false;
+var canLeave:Bool = true;
+var headNorm:FlxSprite;
+var blackBottom:FlxSprite;
+
+var white:FlxSprite;
+
+var titleBlackTween:FlxTween;
+
+function onGameOver(){
+    trace("game over cutscene time");
+    if (playVideo){
+        FlxG.sound.playMusic(Paths.music("Falsethorn domain expansion"), 0, true);
+        if (FlxG.sound.music!=null){
+            FlxG.sound.music.fadeIn(2, 0, 1);
+        }
+
+        gameOverTime = true;
+        game.endingSong = true; // stop cam bumps
+        game.camHUD.alpha = 0;
+        game.zoomEveryBeat = 0;
+        game.camZooming = false;
+        startedCutscene = true;
+        game.inst.pause();
+        game.vocals.pause();
+        playVideo = false;
+        blackBottom.alpha = 1;
+        headNorm.alpha = 1;
+
+        titleBlack.alpha = 1;
+        titleBlackTween = FlxTween.tween(titleBlack,  {alpha: 0}, 10.0, {ease: FlxEase.sineOut});
+        return Function_Stop;
+    }
+    return Function_Continue;
+}
+
+function onUpdate(elapsed){
+    if (!startedCutscene) {return;}
+
+    if (hasEnded) {return;}
+
+    if (!canLeave){return;}
+
+    if(FlxG.keys.pressed.SPACE||FlxG.keys.pressed.ESCAPE||FlxG.keys.pressed.ENTER||FlxG.keys.pressed.Z||controls.ACCEPT){
+        canLeave = false;
+        if (FlxG.sound.music != null){
+            FlxG.sound.music.stop();
+        }
+        FlxG.sound.play(Paths.music("falsethorn game over end"));
+        white.alpha = 1;
+        
+        headSelect.alpha = 1;
+        headNorm.alpha = 0;
+
+        FlxTween.tween(headSelect.scale,  {x: 1, y: 1}, 4.0, {ease: FlxEase.sineIn});
+
+        if (titleBlackTween != null){
+            titleBlackTween.cancel();
+            titleBlackTween.destroy();
+        }
+        titleBlackTween= FlxTween.tween(titleBlack,  {alpha: 1}, 4.0, {ease: FlxEase.sineIn});
+        
+        new FlxTimer().start(4, function(tmr){
+            startAndEnd();
+            tmr.destroy();
+        });
+        
+    }
+}
+
+function onSpaceNotPressed() {
+    allowedToLoad = false;
+    trace("Space Not Pressed!");
+}
+
+function onCreatePost() {
+
+    blackBottom = new FlxSprite(0,0, Paths.image('menus/mainmenu/fullBlack'));
+    blackBottom.scrollFactor.set(0,0);
+    blackBottom.scale.set(1.7,1.7);
+    blackBottom.alpha = 0;
+    blackBottom.cameras = [game.camOverlay];
+    game.add(blackBottom);
+
+    white = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.WHITE);
+    white.scale.set(1280 * 2, 720 * 2);
+    white.scrollFactor.set(0,0);
+    white.alpha = 0;
+    white.cameras = [game.camOverlay];
+    game.add(white);
+
+    headNorm = new FlxSprite();
+    headNorm.frames = Paths.getSparrowAtlas('headNorm');
+    headNorm.animation.addByPrefix("idle", 'headNorm', 24, true);
+    headNorm.animation.play("idle", true);
+    headNorm.scrollFactor.set(0,0);
+    headNorm.scale.set(0.7,0.7);
+    headNorm.antialiasing = true;
+    headNorm.alpha = 0;
+    headNorm.cameras = [game.camOverlay];
+    headNorm.screenCenter();
+    game.add(headNorm);
+
+    headSelect = new FlxSprite();
+    headSelect.frames = Paths.getSparrowAtlas('headSelect');
+    headSelect.animation.addByPrefix("idle", 'headSelect', 24, true);
+    headSelect.animation.play("idle", true);
+    headSelect.scrollFactor.set(0,0);
+    headSelect.scale.set(0.7,0.7);
+    headSelect.antialiasing = true;
+    headSelect.alpha = 0;
+    headSelect.cameras = [game.camOverlay];
+    headSelect.screenCenter();
+    game.add(headSelect);
+
+    titleBlack = new FlxSprite(0,0, Paths.image('menus/mainmenu/fullBlack'));
+    titleBlack.scrollFactor.set(0,0);
+    titleBlack.scale.set(1.7,1.7);
+    titleBlack.alpha = 0;
+    titleBlack.cameras = [game.camOverlay];
+    game.add(titleBlack);
+
+      MusicBeatState.this.addTouchPad("NONE", "A_B");
+    MusicBeatState.this.addTouchPadCamera();
+    
+
+    object = headNorm;
+}
+
+
+function startAndEnd(){
+    hasEnded = true;
+    game.doGameOver();
+}

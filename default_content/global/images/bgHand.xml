@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="bgHand.png">
+	<!-- Created with Adobe Animate version 22.0.1.105 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Left0000" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Left0001" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Left0002" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Left0003" x="54" y="8" width="38" height="53"/>
+	<SubTexture name="Left0004" x="54" y="8" width="38" height="53"/>
+	<SubTexture name="Left0005" x="54" y="8" width="38" height="53"/>
+	<SubTexture name="Left0006" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Left0007" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Left0008" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Left0009" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0010" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0011" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0012" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0013" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0014" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0015" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0016" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0017" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0018" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0019" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0020" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0021" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0022" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0023" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0024" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0025" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Left0026" x="146" y="8" width="38" height="53"/>
+	<SubTexture name="Right0000" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Right0001" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Right0002" x="100" y="8" width="38" height="53"/>
+	<SubTexture name="Right0003" x="192" y="8" width="38" height="53"/>
+	<SubTexture name="Right0004" x="192" y="8" width="38" height="53"/>
+	<SubTexture name="Right0005" x="192" y="8" width="38" height="53"/>
+	<SubTexture name="Right0006" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Right0007" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Right0008" x="8" y="8" width="38" height="53"/>
+	<SubTexture name="Right0009" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0010" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0011" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0012" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0013" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0014" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0015" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0016" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0017" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0018" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0019" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0020" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0021" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0022" x="8" y="69" width="38" height="53"/>
+	<SubTexture name="Right0023" x="8" y="69" width="38" height="53"/>
+</TextureAtlas>

@@ -1,0 +1,4 @@
+Adjusts the zoom of the camera.
+Put values in value 1.
+
+Default Camera Zoom for Stage = 0.9

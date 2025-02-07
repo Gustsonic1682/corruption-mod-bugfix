@@ -1,0 +1,29 @@
+
+function setupNoteTexture(note:Note)
+    note.texture = 'NOTE_assets_Corrupt';
+
+
+function setupReceptorTexture(strum:StrumNote){
+    strum.texture = 'NOTE_assets_Corrupt';
+    if(strum.field == game.dadField){
+		switch (Math.abs(strum.column) % 4)
+		{
+			case 0:
+				strum.animation.addByPrefix('static', 'arrowLEFT');
+				strum.animation.addByPrefix('pressed', 'left press', 24, false);
+				strum.animation.addByPrefix('confirm', 'arrowLEFT', 24, false);
+			case 1:
+				strum.animation.addByPrefix('static', 'arrowDOWN');
+				strum.animation.addByPrefix('pressed', 'down press', 24, false);
+				strum.animation.addByPrefix('confirm', 'arrowDOWN', 24, false);
+			case 2:
+				strum.animation.addByPrefix('static', 'arrowUP');
+				strum.animation.addByPrefix('pressed', 'up press', 24, false);
+				strum.animation.addByPrefix('confirm', 'arrowUP', 24, false);
+			case 3:
+				strum.animation.addByPrefix('static', 'arrowRIGHT');
+				strum.animation.addByPrefix('pressed', 'right press', 24, false);
+				strum.animation.addByPrefix('confirm', 'arrowRIGHT', 24, false);
+		}
+    }
+}

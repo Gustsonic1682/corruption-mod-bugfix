@@ -1,0 +1,2 @@
+function onAnimPlay(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0)
+	clone.playAnim(AnimName, Force, Reversed, Frame);

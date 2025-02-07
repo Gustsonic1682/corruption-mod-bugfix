@@ -1,0 +1,75 @@
+var healthBar:FNFHealthBar;
+function createHUD(iP1, iP2, songName, st)
+{	
+    healthBar = new FNFHealthBar(iP1, iP2);  
+    healthBarBG = healthBar.healthBarBG;
+    iconP1 = healthBar.iconP1;
+    iconP2 = healthBar.iconP2;
+    script.set("iconP1", iconP1);
+    script.set("iconP2", iconP2);
+    healthBar.healthBarBG.y = FlxG.height * (ClientPrefs.downScroll ? 0.11 : 0.89);
+    healthBar.y = healthBarBG.y + 5;
+    healthBar.iconP1.y = healthBar.y - 75;
+    healthBar.iconP2.y = healthBar.y - 75;
+
+	scoreTxt = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + (ClientPrefs.downScroll ? - 30 : 30), 0, "", 20);
+    scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, 'right', FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+    scoreTxt.scrollFactor.set();
+
+    stats = st;
+
+
+    healthBar.createFilledBar(0xFF0000, 0xFF00FF00);
+    healthBar.updateBar();
+	
+}
+
+function set_displayedHealth(value:Float){
+    healthBar.value = value;
+    return value;
+}
+
+function beatHit(beat:Int)
+{
+    healthBar.iconScale = 1.2;
+}
+
+function reloadHealthBarColors(dadColor, bfColor)
+{
+    if (healthBar != null)
+    {
+        healthBar.createFilledBar(0xFFFF0000, 0xFF00FF00);
+        healthBar.updateBar();
+    }
+}
+
+function changedOptions(changed:Array<String>)
+{
+	if (changed.contains("downScroll")){
+        healthBar.healthBarBG.y = FlxG.height * (ClientPrefs.downScroll ? 0.11 : 0.89);
+        healthBar.y = healthBarBG.y + 5;
+        healthBar.iconP1.y = healthBar.y - 75;
+        healthBar.iconP2.y = healthBar.y - 75;
+        scoreTxt.x = healthBarBG.x + healthBarBG.width - 190;
+        scoreTxt.y = healthBarBG.y + (ClientPrefs.downScroll ? -30 : 30);
+    }
+}
+
+var score = 0;
+
+var songPlaying = false;
+function songStarted() songPlaying = true;
+function songEnding() songPlaying = false;
+var scoreString = Paths.getString("score");
+function update(elapsed)
+{
+    var shownScore:String;
+    if (ClientPrefs.showWifeScore)
+        shownScore = Std.string(Math.floor(game.stats.totalNotesHit * 100));
+    else
+        shownScore = Std.string(game.stats.score);
+    		
+
+    game.scoreTxt.text = scoreString + ":" + shownScore;
+}
+

@@ -1,0 +1,10 @@
+{
+	"chapters": [],
+	"freeplayCategories": [
+		{
+			"name": "Corruption",
+			"id": "corruption"
+		}
+	],
+	"defaultCategory": "corruption"
+}

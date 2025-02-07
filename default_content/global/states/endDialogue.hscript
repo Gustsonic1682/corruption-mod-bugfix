@@ -1,0 +1,693 @@
+import StringTools;
+import flixel.math.FlxMath;
+import openfl.filters.ShaderFilter;
+import openfl.Lib;
+
+importClass("Discord");
+importClass("FadeTransitionSubstate");
+importClass("MusicBeatState");
+importClass("LoadingState");
+importClass("options.OptionsState");
+importClass("tgt.MainMenuState");
+importClass("CreditsState");
+
+var box:FlxSprite;
+
+var dialogueList:Array<String> = [];
+
+var swagDialogue:FlxTypeText;
+var dropText:FlxText;
+var glitchText:FlxText;
+
+var finishThing:Void->Void;
+var nextDialogueThing:Void->Void = null;
+var skipDialogueThing:Void->Void = null;
+
+var dialogueOpened:Bool = false;
+var dialogueStarted:Bool = false;
+var dialogueEnded:Bool = false;
+
+var inputField:FlxInputText;
+var inputString:String;
+
+var suggestText:FlxText;
+var notifText:FlxText;
+
+var object:FlxSprite;
+
+var curNum:Int = 0;
+
+var glitchTime:Bool = false;
+var isEnding:Bool = false;
+
+var consoleOpen:Bool = false;
+var canOpenConsole:Bool = true;
+
+var moveTween:FlxTween;
+var moveTween2:FlxTween;
+var cloud:FlxSprite;
+var cloud2:FlxSprite;
+
+var endTime:Bool = false;
+
+var playing:Bool = false;
+
+// cannot delete spirit cuz he isn't a game object, bro will be stuck in an empty game lol
+var validStrings:Array<String> = ["delete", "delete game", "delete funkin", "delete funkin'", "delete funkin.exe", "delete null","delete (null)","delete(null)","delete senpai","delete (senpai)","delete(senpai)","remove null","remove (null)","remove(null)","remove senpai","remove (senpai)","remove(senpai)"];
+var validLeaveStrings:Array<String> = ["exit", "exit()","quit","quit()","leave","leave()"]; // references to chkdsk video
+var validSuggestions:Array<String> = ["d","de","del","dele","delet"];
+
+function onStateCreate(){
+
+    var file:String = Paths.txt('accessDeniedEnd');
+    dialogueList = CoolUtil.coolTextFile(file);
+
+    cloud = new FlxSprite(-2616,48, Paths.image('nullSkylong'));
+    cloud.scrollFactor.set(0,0);
+    cloud.scale.set(6.7,6.7);
+    add(cloud); //start pos: -2616 || end pos: 773
+    moveTween = FlxTween.tween(cloud, {x: 773}, 100, {onComplete: cloudEase1});
+
+    cloud2 = new FlxSprite(351,-2927, Paths.image('nullSkyupdog'));
+    cloud2.scrollFactor.set(0,0);
+    cloud2.scale.set(8.7,8.7);
+    add(cloud2); //start pos: -2927 || end pos: 344
+    moveTween2 = FlxTween.tween(cloud2, {y: 344}, 120, {onComplete: cloudEase2});
+    cloud2.alpha = 0.75;
+    cloud2.blend = 0;
+
+    FlxG.sound.playMusic(Paths.music('trial_and_error'), 0);
+    FlxG.sound.music.fadeIn(1, 0, 0.8);
+
+    white = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.WHITE);
+    white.scale.set(1280 * 2, 720 * 2);
+	white.updateHitbox();
+    white.scrollFactor.set(0,0);
+    white.alpha = 1;
+    add(white);
+    FlxTween.tween(white, {alpha: 0}, 15, {ease: FlxEase.sineIn});
+
+    black = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.BLACK);
+    black.scale.set(1280 * 2, 720 * 2);
+	black.updateHitbox();
+    black.scrollFactor.set(0,0);
+    black.alpha = 0;
+    add(black);
+
+    senpaiIdle = new FlxSprite();
+    senpaiIdle.frames = Paths.getSparrowAtlas("senpaiBack");
+    senpaiIdle.animation.addByPrefix("anim", "idle", 24, true);
+    senpaiIdle.animation.play("anim", true);
+    senpaiIdle.updateHitbox();
+    senpaiIdle.antialiasing = false;
+    senpaiIdle.alpha = 0;
+    senpaiIdle.setPosition(682,280);
+    senpaiIdle.scale.set(2,2); // 4,4
+    senpaiIdle.scrollFactor.set(0,0);
+    add(senpaiIdle);
+    FlxTween.tween(senpaiIdle, {alpha: 1, x: 782}, 2, {ease: FlxEase.sineOut});
+    FlxTween.tween(senpaiIdle.scale, {x: 4, y: 4}, 2, {ease: FlxEase.sineOut});
+
+    senpaiSpook = new FlxSprite(0,0, Paths.image('senpaiSpook'));
+    senpaiSpook.scrollFactor.set(0,0);
+    senpaiSpook.scale.set(4,4);
+    senpaiSpook.alpha = 0;
+    senpaiSpook.setPosition(888,458);
+    add(senpaiSpook);
+    
+    hands1 = new FlxSprite();
+    hands1.frames = Paths.getSparrowAtlas("hands1");
+    hands1.animation.addByPrefix("anim", "hands1 idle", 24, false);
+    hands1.animation.play("anim", true);
+    hands1.updateHitbox();
+    hands1.antialiasing = false;
+    hands1.alpha = 0;
+    hands1.blend = 0;
+    //hands1.setPosition(682,280);
+    hands1.screenCenter();
+    hands1.scale.set(1.6,1.6); // 4,4
+    hands1.scrollFactor.set(0,0);
+    add(hands1);
+
+    box = new FlxSprite(-20, 45);
+
+    box.frames = Paths.getSparrowAtlas('weeb/pixelUI/dialogueBox-evil');
+    box.animation.addByPrefix('normalOpen', 'Spirit Textbox spawn', 24, false);
+    box.animation.addByIndices('normal', 'Spirit Textbox spawn instance 1', [11], "", 24);
+    box.animation.play('normalOpen');
+    box.setGraphicSize(Std.int(box.width * 6 * 0.9));
+    box.updateHitbox();
+    add(box);
+    box.alpha = 1;
+
+    box.screenCenter();
+
+    box.y = 45;
+
+    dropText = new FlxText(242, 502, Std.int(FlxG.width * 0.6), "", 32);
+    dropText.font = 'Pixel Arial 11 Bold';
+    add(dropText);
+
+    swagDialogue = new FlxTypeText(240, 500, Std.int(FlxG.width * 0.6), "", 32);
+    swagDialogue.font = 'Pixel Arial 11 Bold';
+    swagDialogue.sounds = [FlxG.sound.load(Paths.sound('pixelText'), 0.6)];
+    add(swagDialogue);
+
+    glitchText = new FlxText(2000, 500, Std.int(FlxG.width * 0.6), "", 32);
+    glitchText.font = 'Pixel Arial 11 Bold';
+    add(glitchText);
+
+    black2 = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.BLACK);
+    black2.scale.set(1280 * 2, 720 * 2);
+	black2.updateHitbox();
+    black2.scrollFactor.set(0,0);
+    black2.alpha = 0;
+    add(black2);
+
+    hands2 = new FlxSprite();
+    hands2.frames = Paths.getSparrowAtlas("hands2");
+    hands2.animation.addByPrefix("anim", "hands2 idle", 24, false);
+    hands2.animation.play("anim", true);
+    hands2.updateHitbox();
+    hands2.antialiasing = false;
+    hands2.alpha = 0;
+    //hands1.setPosition(682,280);
+    hands2.screenCenter();
+    hands2.scale.set(1.6,1.6); // 4,4
+    hands2.scrollFactor.set(0,0);
+    hands2.blend = 0;
+    add(hands2);
+
+    swagDialogue.color = FlxColor.WHITE;
+    glitchText.color = FlxColor.WHITE;
+    dropText.color = FlxColor.BLACK;
+
+    inputField = new FlxInputText(10, -50, 500, "", 15, FlxColor.WHITE, FlxColor.BLACK);
+    //inputField.visible = false;
+    inputField.fieldBorderThickness = 10;
+    inputField.scrollFactor.set(0, 0);
+    inputField.callback = onInputChange;
+    inputField.forceCase = 1;
+    add(inputField);
+
+    suggestText = new FlxText(10, 10, 500, "DELETE", 15);
+    suggestText.color = FlxColor.WHITE;
+    suggestText.alpha = 0;
+    add(suggestText);
+
+    notifText = new FlxText(0, -50, 500, "ADMIN ACCESS GRANTED", 15);
+    notifText.color = FlxColor.WHITE;
+    notifText.borderSize = 10;
+    notifText.alpha = 1;
+    notifText.borderColor = FlxColor.BLACK;
+    notifText.borderStyle = FlxTextBorderStyle.OUTLINE;
+    add(notifText);
+
+    scanlinesFake = new FlxSprite();
+    scanlinesFake.frames = Paths.getSparrowAtlas("ScanlinesThin");
+    scanlinesFake.animation.addByPrefix("anim", "ScanlinesThin idle", 24, true);
+    scanlinesFake.animation.play("anim", true);
+    scanlinesFake.updateHitbox();
+    scanlinesFake.antialiasing = true;
+    scanlinesFake.alpha = 0.05;
+    scanlinesFake.blend = 9;
+    scanlinesFake.screenCenter();
+    scanlinesFake.scale.set(1.9,1.9);
+    scanlinesFake.scrollFactor.set(0,0);
+    add(scanlinesFake);
+
+    video = new MP4Sprite();
+	video.bitmap.onFormatSetup.add(function():Void
+	{
+		video.setGraphicSize(1280, 720);
+		video.updateHitbox();
+		video.scale.x = 1;
+		video.scale.y = 1;
+		video.setPosition(0,0);
+	});
+    video.scrollFactor.set(0,0);
+	video.bitmap.onEndReached.add(retrunToMenu);
+	video.load(Paths.video('bad ending'));
+	video.antialiasing = true;
+	add(video);
+
+    video2 = new MP4Sprite();
+	video2.bitmap.onFormatSetup.add(function():Void
+	{
+		video2.setGraphicSize(1280, 720);
+		video2.updateHitbox();
+		video2.scale.x = 1;
+		video2.scale.y = 1;
+		video2.setPosition(0,0);
+	});
+    video2.scrollFactor.set(0,0);
+	video2.bitmap.onEndReached.add(retrunToMenu);
+	video2.load(Paths.video('Null Week End'));
+	video2.antialiasing = true;
+	add(video2);
+	
+	addTouchPad("NONE", "A");
+    addTouchPadCamera();
+
+    object = video;
+}
+
+
+function cloudEase1(tween:FlxTween):Void
+{
+    if (moveTween != null){
+        moveTween.cancel();
+    }
+
+    cloud.x = -2616;
+    moveTween = FlxTween.tween(cloud, {x: 773}, 100, {onComplete: cloudEase1});
+}
+
+function cloudEase2(tween:FlxTween):Void
+{
+    if (moveTween2 != null){
+        moveTween2.cancel();
+    }
+
+    cloud2.y = -2927;
+    moveTween2 = FlxTween.tween(cloud2, {y: 344}, 120, {onComplete: cloudEase2});
+}
+
+function onUpdatePost(elapsed:Float){
+    //if (FlxG.keys.justPressed.F7)
+        //FlxG.switchState(new CreditsState());
+}
+
+function onDestroy(){
+    video.destroy();
+    video2.destroy();
+}
+
+function onUpdate(elapsed:Float){
+    // try to remember to remove lmao
+
+
+    if (endTime){
+
+        return;
+    }
+
+    if (FlxG.keys.justPressed.ESCAPE){
+        //FlxG.switchState(new MainMenuState());
+    }
+
+    if (glitchTime){
+        dropText.text = glitchText.text;
+        glitchText.x = 240;
+        swagDialogue.x = 2000;
+    } else {
+        dropText.text = swagDialogue.text;
+        swagDialogue.x = 240;
+        glitchText.x = 2000;
+    }
+
+    
+    
+    if (box.animation.curAnim != null)
+    {
+        if (box.animation.curAnim.name == 'normalOpen' && box.animation.curAnim.finished)
+        {
+            box.animation.play('normal');
+            dialogueOpened = true;
+        }
+    }
+
+    if (dialogueOpened && !dialogueStarted)
+    {
+        startDialogue();
+        dialogueStarted = true;
+    }
+
+    //if (consoleOpen){
+        //if (FlxG.key.justPressed.ANY){   /// < dont work for some reason in hscript :(
+        //    FlxG.sound.play(Paths.sound('debugClick')); 
+       // }
+    //}
+
+    if (canOpenConsole && (FlxG.keys.justPressed.GRAVEACCENT || FlxG.keys.justPressed.TAB || FlxG.keys.justPressed.SLASH)){
+        canOpenConsole = false;
+        consoleOpen = !consoleOpen;
+
+        FlxG.sound.play(Paths.sound('debugClick'));
+        
+        if (consoleOpen){
+            notifText.alpha = 0;
+            box.alpha = 0;
+            swagDialogue.alpha = 0;
+            dropText.alpha = 0;
+            FlxTween.tween(inputField, {y: 10}, 0.2, {
+                onComplete: function(lol)
+                {
+                    canOpenConsole = true;
+                }
+            });
+            inputField.hasFocus = true;
+        } else {
+            box.alpha = 1;
+            swagDialogue.alpha = 1;
+            dropText.alpha = 1;
+            suggestText.alpha = 0;
+            FlxTween.tween(inputField, {y: -50}, 0.2, {
+                onComplete: function(lol)
+                {
+                    canOpenConsole = true;
+                }
+            });
+            inputField.hasFocus = false;
+        }
+    }
+
+    if (FlxG.keys.justPressed.ENTER){
+        if (consoleOpen){
+            checkInput(inputString);
+        }
+    }
+
+    if(controls.ACCEPT)
+    {
+        if (consoleOpen){
+            return;
+        }
+
+        if (dialogueEnded)
+        {
+            if (dialogueList[1] == null && dialogueList[0] != null)
+            {
+                if (!isEnding)
+                {
+                    // isEnding = true;
+                    // FlxG.sound.play(Paths.sound('clickText'), 0.8);	
+
+                    // new FlxTimer().start(0.2, function(tmr:FlxTimer)
+                    // {
+                    //     box.alpha -= 1 / 5;
+                    //     swagDialogue.alpha -= 1 / 5;
+                    //     handSelect.alpha -= 1 / 5;
+                    //     dropText.alpha = swagDialogue.alpha;
+                    // }, 5);
+
+                    // new FlxTimer().start(1.5, function(tmr:FlxTimer)
+                    // {
+                    //     finishThing();
+                    //     kill();
+                    // });
+                }
+            }
+            else
+            {
+                dialogueList.remove(dialogueList[0]);
+                startDialogue();
+                FlxG.sound.play(Paths.sound('clickText'), 0.8);
+                
+            }
+        }
+        else if (dialogueStarted)
+        {
+            FlxG.sound.play(Paths.sound('clickText'), 0.8);
+            swagDialogue.skip();
+            
+            if(skipDialogueThing != null) {
+                skipDialogueThing();
+            }
+        }
+        trace(dialogueList[1]);
+    }
+}
+
+function onInputChange(input:String):Void {
+    if (endTime){return;}
+    FlxG.sound.play(Paths.sound('debugClick'));
+    inputString = input;
+    if (validSuggestions.contains(input.toLowerCase()) && consoleOpen){
+        suggestText.alpha = 0.2;
+    } else {
+        suggestText.alpha = 0;
+    }
+
+}
+
+function checkInput(input:String):Void{
+    trace ("Inputted string: "+ input.toLowerCase());
+    if (validStrings.contains(input.toLowerCase())){
+        canOpenConsole = false;
+        trace("null deleted!");
+        badEnding();
+        endTime = true;
+    }
+    else if (validLeaveStrings.contains(input.toLowerCase())){
+        canOpenConsole = false;
+        ending();
+        endTime = true;
+    }
+    else {
+        trace("unkown command");
+    }
+}
+
+function badEnding():Void{
+    black2.alpha = 1;
+    FlxG.sound.music.stop();
+    if(playing)return;
+    playing = true;
+    if(hxvlc != "0")
+        video.play();
+    else if(hxcodec == "3.0.0")
+        video.play(Paths.video('bad ending'));
+    else
+        video.playVideo(Paths.video('bad ending'));
+}
+
+function retrunToMenu(){
+    video.destroy();
+    video2.destroy();
+    var state = new HScriptState("softCodeMenu");
+    MusicBeatState.switchState(state);
+}
+
+function ending():Void{
+    black2.alpha = 1;
+    FlxG.sound.music.stop();
+    if(playing)return;
+    playing = true;
+    if(hxvlc != "0")
+        video2.play();
+    else if(hxcodec == "3.0.0")
+        video2.play(Paths.video('Null Week End'));
+    else
+        video2.playVideo(Paths.video('Null Week End'));
+}
+
+function checkCurNum():Void{
+    curNum++;
+
+    trace("curnum: "+curNum);
+
+    switch(curNum){
+        case 1:
+            new FlxTimer().start(0.1, function(tmr){
+                glitchText.text = "-=---111110-";
+                glitchTime = true;
+                FlxG.sound.play(Paths.sound('debugClick'));
+                new FlxTimer().start(0.2, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+
+            new FlxTimer().start(0.6, function(tmr){
+                glitchText.text = "-=---111110---=222222======";
+                glitchTime = true;
+                FlxG.sound.play(Paths.sound('debugClick'));
+                new FlxTimer().start(0.1, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+
+            new FlxTimer().start(2, function(tmr){
+                FlxTween.tween(notifText, {y: 0}, 0.2, {
+                    onComplete: function(lol)
+                    {
+                        new FlxTimer().start(4, function(tmr2){
+                            FlxTween.tween(notifText, {y: -50}, 0.2);
+                            tmr2.destroy();
+                        });
+                    }
+                });
+                tmr.destroy();
+            });
+        case 2:
+            new FlxTimer().start(0.1, function(tmr3){
+                glitchText.text = "NULL";
+                glitchTime = true;
+                FlxG.sound.play(Paths.sound('debugClick'));
+                new FlxTimer().start(0.2, function(tmr){
+                    glitchText.color = FlxColor.RED;
+                    FlxG.sound.play(Paths.sound('debugClick'));
+                    glitchText.text = "////////";
+                    new FlxTimer().start(0.1, function(tmr2){
+                        glitchTime = false;
+                        tmr2.destroy();
+                    });
+                    tmr.destroy();
+                });
+                tmr3.destroy();
+            });
+            
+        case 3:
+            new FlxTimer().start(0.1, function(tmr){
+                glitchText.color = FlxColor.WHITE;
+                glitchText.text = "//////";
+                FlxG.sound.play(Paths.sound('debugClick'));
+                glitchTime = true;
+                new FlxTimer().start(0.2, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+
+            new FlxTimer().start(2, function(tmr){
+                glitchText.color = FlxColor.RED;
+                glitchText.text = "////////////////////////////////";
+                glitchTime = true;
+                FlxG.sound.play(Paths.sound('debugClick'));
+                new FlxTimer().start(0.1, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+        case 4:
+            new FlxTimer().start(0.1, function(tmr3){
+                glitchText.color = FlxColor.WHITE;
+                glitchText.text = '£"&!';
+                glitchTime = true;
+                FlxG.sound.play(Paths.sound('debugClick'));
+                new FlxTimer().start(0.2, function(tmr){
+                    glitchText.color = FlxColor.RED;
+                    glitchText.text = "////////";
+                    FlxG.sound.play(Paths.sound('debugClick'));
+                    new FlxTimer().start(0.1, function(tmr2){
+                        glitchTime = false;
+                        tmr2.destroy();
+                    });
+                    tmr.destroy();
+                });
+                tmr3.destroy();
+            });
+            new FlxTimer().start(2, function(tmr){
+                glitchText.color = FlxColor.WHITE;
+                glitchText.text = '£"&!(*8)$")$*)("£89793210£"*)()';
+                FlxG.sound.play(Paths.sound('debugClick'));
+                glitchTime = true;
+                new FlxTimer().start(0.1, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+        case 5:
+            new FlxTimer().start(0.1, function(tmr){
+                glitchText.color = FlxColor.WHITE;
+                glitchText.text = "+++";
+                FlxG.sound.play(Paths.sound('debugClick'));
+                glitchTime = true;
+                new FlxTimer().start(0.1, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+
+            hands1.alpha = 1;
+            hands1.animation.play("anim", true);
+
+            new FlxTimer().start(1, function(tmr){
+                FlxG.sound.play(Paths.sound('debugClick'));
+                glitchText.color = FlxColor.WHITE;
+                glitchText.text = "++++++++++++++++++";
+                glitchTime = true;
+                new FlxTimer().start(0.1, function(tmr2){
+                    glitchTime = false;
+                    tmr2.destroy();
+                });
+                tmr.destroy();
+            });
+        case 6:
+            FlxG.sound.music.stop();
+            FlxG.sound.play(Paths.sound('debugClick'));
+            FlxG.sound.play(Paths.sound('get out'));
+
+            new FlxTimer().start(2, function(tmr){
+                new FlxTimer().start(0.5, function(tmr){
+                    FlxTween.tween(black2, {alpha: 1}, 0.5);
+                    tmr.destroy();
+                });
+                hands1.alpha = 0;
+                hands2.alpha = 1;
+                hands2.animation.play("anim", true);
+                tmr.destroy();
+            });
+
+            new FlxTimer().start(8, function(tmr){
+                ending();
+                endTime = true;
+                tmr.destroy();
+            });
+            
+            swagDialogue.sounds = null;
+            if (moveTween != null){
+                moveTween.cancel();
+            }
+            if (moveTween2 != null){
+                moveTween2.cancel();
+            }
+            black.alpha = 0.7;
+            senpaiSpook.alpha = 1;
+            senpaiIdle.alpha = 0;
+
+            if (consoleOpen == false){
+                canOpenConsole = false;
+            }
+
+    }
+}
+
+function startDialogue():Void
+{
+    //cleanDialog();
+
+    checkCurNum();
+    // var theDialog:Alphabet = new Alphabet(0, 70, dialogueList[0], false, true);
+    // dialogue = theDialog;
+    // add(theDialog);
+
+    // swagDialogue.text = ;
+    swagDialogue.resetText(dialogueList[0]);
+    swagDialogue.start(0.04, true);
+    swagDialogue.completeCallback = function() {
+        dialogueEnded = true;
+    };
+
+    dialogueEnded = false;
+
+    if(nextDialogueThing != null) {
+        
+        nextDialogueThing();
+    }
+}
+
+function cleanDialog():Void
+{
+    var splitName:Array<String> = dialogueList[0].split(":");
+    var curCharacter = splitName[1];
+    dialogueList[0] = dialogueList[0].substr(splitName[1].length + 2).trim();
+}

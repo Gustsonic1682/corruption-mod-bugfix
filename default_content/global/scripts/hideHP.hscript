@@ -1,0 +1,6 @@
+import MusicBeatState;
+
+function onEndSong() {
+    var state = new HScriptState("softCodeMenu");
+    MusicBeatState.switchState(state);
+}

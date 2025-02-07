@@ -1,0 +1,92 @@
+// Hi, Nebula here!
+// Thisd lil doohickey script controls playing skippable video cutscenes at the start and end of every song!
+// The old system was kinda hodge-podged together, so hopefully this system will allow for things to be a bit better and more streamlined!
+
+// This is split into 2 parts, this script (Which deals with starting cutscenes and dealing with what to do once they've finished playing)
+// And the substate script, which deals with actually.. PLAYING the cutscene!
+import flixel.addons.transition.FlxTransitionableState;
+
+if(!PlayState.isStoryMode) // This should ONLY work on story mode!!
+	return;
+
+var didEndCutscene:Bool = false;
+function cutsceneFinished(){
+	game.inCutscene = false;
+	if(game.endingSong){
+		endSong();
+		}
+		else{
+		startCountdown();
+	}
+	game.closeSubState();
+	trace("ITS DONE");
+}
+
+function onPause(){
+	if(game.inCutscene)return Function_Stop; // Don't pause while in a cutscene, silly!
+}
+
+function showCutscene(cutscenePath){
+	game.persistentUpdate = false; // Don't update the state while we're in the cutscene
+	game.persistentDraw = false;
+
+	var cutscenePlayer = new HScriptSubstate("videoCutscenePlayer");
+	if(cutscenePlayer.script.errored){
+		cutsceneFinished();
+		return;
+	}
+	
+	cutscenePlayer.script.set("cutscenePath", cutscenePath);
+	cutscenePlayer.script.set("onCutsceneFinished", () -> {
+		cutsceneFinished();
+	});
+
+	game.inCutscene = true;
+	// We want to let the cutscene substate know what cutscene to play, and what to do once the video is complete
+
+	game.openSubState(cutscenePlayer); // Opens the cutscene player
+}
+
+
+function onCreate(){
+	var cutscenePath = 'cutscenes/' + game.songName + "-start";
+	if (!Paths.exists(Paths.video(cutscenePath)))
+		return;
+
+	FlxTransitionableState.skipNextTransIn = true;
+}
+
+function onStartCountdown(){
+	if(PlayState.seenCutscene)
+		return Function_Continue;
+
+	PlayState.seenCutscene = true; // Marks us as having seen the cutscene, so that we
+	// 1. Don't get stuck in an infinite loop of cutscenes
+	// 2. So we don't have to see the cutscene again on a song restart
+	// (This value gets reset when the song ends and it goes on to the next song, so we can reuse it)
+
+	var cutscenePath = 'cutscenes/' + game.songName + "-start";
+	if (!Paths.exists(Paths.video(cutscenePath)))
+		return Function_Continue; // No starting cutscene, just let the game start the song as usual
+
+	showCutscene(cutscenePath);
+
+	return Function_Halt; // Halt to prevent scripts running after this from having onStartCountdown called
+}
+
+function onEndSong(){
+	if(didEndCutscene)return Function_Continue;
+
+	didEndCutscene = true;
+	// We don't use seenCutscene, since that variable is for STARTING cutscenes, not ending ones!
+
+	var cutscenePath = 'cutscenes/' + game.songName + "-end";
+	if (!Paths.exists(Paths.video(cutscenePath)))
+		return Function_Continue; // No starting cutscene, just let the game start the song as usual
+
+	trace(cutscenePath);
+
+	showCutscene(cutscenePath);
+
+	return Function_Halt;
+}

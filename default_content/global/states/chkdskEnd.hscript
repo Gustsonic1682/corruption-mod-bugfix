@@ -1,0 +1,249 @@
+import StringTools;
+import flixel.math.FlxMath;
+import openfl.filters.ShaderFilter;
+import openfl.Lib;
+
+importClass("Discord");
+importClass("FadeTransitionSubstate");
+importClass("MusicBeatState");
+importClass("LoadingState");
+importClass("options.OptionsState");
+importClass("tgt.MainMenuState");
+importClass("CreditsState");
+
+var box:FlxSprite;
+
+var dialogueList:Array<String> = [];
+
+var swagDialogue:FlxTypeText;
+var dropText:FlxText;
+var glitchText:FlxText;
+
+var finishThing:Void->Void;
+var nextDialogueThing:Void->Void = null;
+var skipDialogueThing:Void->Void = null;
+
+var dialogueOpened:Bool = false;
+var dialogueStarted:Bool = false;
+var dialogueEnded:Bool = false;
+
+var inputField:FlxInputText;
+var inputString:String;
+
+var suggestText:FlxText;
+var notifText:FlxText;
+
+var object:FlxSprite;
+
+var curNum:Int = 0;
+
+var glitchTime:Bool = false;
+var isEnding:Bool = false;
+
+var consoleOpen:Bool = false;
+var canOpenConsole:Bool = true;
+
+var moveTween:FlxTween;
+var moveTween2:FlxTween;
+var cloud:FlxSprite;
+var cloud2:FlxSprite;
+
+var endTime:Bool = false;
+
+var playing:Bool = false;
+
+var validSuggestions:Array<String> = ["","e","ex","exi"];
+
+var suggestTab:FlxSprite;
+var suggestTabTween:FlxTween;
+
+function onStateCreate(){
+
+    inputField = new FlxInputText(10, -50, 500, "", 15, FlxColor.BLACK, FlxColor.WHITE);
+    //inputField.visible = false;
+    inputField.fieldBorderThickness = 10;
+    inputField.scrollFactor.set(0, 0);
+    inputField.callback = onInputChange;
+    inputField.forceCase = 1;
+    add(inputField);
+
+    suggestText = new FlxText(10, 10, 500, "EXIT", 15);
+    suggestText.color = FlxColor.BLACK;
+    suggestText.alpha = 0;
+    add(suggestText);
+
+    notifText = new FlxText(0, -50, 500, "CONSOLE ACCESS GRANTED", 15);
+    notifText.color = FlxColor.BLACK;
+    notifText.borderSize = 10;
+    notifText.alpha = 1;
+    notifText.borderColor = FlxColor.WHITE;
+    notifText.borderStyle = FlxTextBorderStyle.OUTLINE;
+    add(notifText);
+
+    scanlinesFake = new FlxSprite();
+    scanlinesFake.frames = Paths.getSparrowAtlas("ScanlinesThin");
+    scanlinesFake.animation.addByPrefix("anim", "ScanlinesThin idle", 24, true);
+    scanlinesFake.animation.play("anim", true);
+    scanlinesFake.updateHitbox();
+    scanlinesFake.antialiasing = true;
+    scanlinesFake.alpha = 0.05;
+    scanlinesFake.blend = 9;
+    scanlinesFake.screenCenter();
+    scanlinesFake.scale.set(1.9,1.9);
+    scanlinesFake.scrollFactor.set(0,0);
+    add(scanlinesFake);
+
+    suggestTab = new FlxSprite(0,0, Paths.image('tab console'));
+    suggestTab.scrollFactor.set(0,0);
+    suggestTab.scale.set(1,1);
+    suggestTab.alpha = 0;
+    add(suggestTab);
+
+    black2 = new FlxSprite(0,0).makeGraphic(1, 1, FlxColor.BLACK);
+    black2.scale.set(1280 * 2, 720 * 2);
+	black2.updateHitbox();
+    black2.scrollFactor.set(0,0);
+    black2.alpha = 0;
+    add(black2);
+
+    video = new MP4Sprite();
+	video.bitmap.onFormatSetup.add(function():Void
+	{
+		video.setGraphicSize(1280, 720);
+		video.updateHitbox();
+		video.scale.x = 1;
+		video.scale.y = 1;
+		video.setPosition(0,0);
+	});
+    video.scrollFactor.set(0,0);
+	video.bitmap.onEndReached.add(callback);
+	video.load(Paths.video('Chkdsk Ed'));
+	video.antialiasing = false;
+	add(video);
+
+    new FlxTimer().start(2, function(tmr){
+        FlxG.sound.play(Paths.sound('debugClick'));
+        FlxTween.tween(notifText, {y: 0}, 0.2, {
+            onComplete: function(lol)
+            {
+                new FlxTimer().start(4, function(tmr2){
+                    FlxG.sound.play(Paths.sound('debugClick'));
+                    FlxTween.tween(notifText, {y: -50}, 0.2);
+                    tmr2.destroy();
+                });
+            }
+        });
+        tmr.destroy();
+    });
+
+    new FlxTimer().start(15, function(tmr){
+        suggestTabTween = FlxTween.tween(suggestTab, {alpha: 0.3}, 20);
+        tmr.destroy();
+    });
+
+    new FlxTimer().start(120, function(tmr){ // fall back if ppl cant figure console out
+        if (endTime != true){
+            canOpenConsole = false;
+            endTime = true;
+            inputField.hasFocus = false;
+            ending();
+        }
+        tmr.destroy();
+    });
+    
+    addTouchPad("NONE", "A");
+    addTouchPadCamera();
+
+    object = video;
+}
+
+function onDestroy(){
+    video.destroy();
+}
+
+function nextSong(){
+    FlxG.save.data.seenCutscene = false;
+    Song.playSong(new SongMetadata("bloodlust", 'null'));
+}
+
+function onUpdate(elapsed:Float){
+    // try to remember to remove lmao
+
+    if (endTime){
+        return;
+    }
+
+    if (canOpenConsole && (FlxG.keys.justPressed.GRAVEACCENT || FlxG.keys.justPressed.TAB || FlxG.keys.justPressed.SLASH)){
+        canOpenConsole = false;
+        consoleOpen = !consoleOpen;
+
+        FlxG.sound.play(Paths.sound('debugClick'));
+        
+        if (consoleOpen){
+            if (suggestTabTween != null){
+                suggestTabTween.cancel();
+                suggestTabTween.destroy();
+            }
+            suggestTab.alpha = 0;
+
+            suggestText.alpha = 0.3;
+            notifText.alpha = 0;
+            FlxTween.tween(inputField, {y: 10}, 0.2, {
+                onComplete: function(lol)
+                {
+                    canOpenConsole = true;
+                }
+            });
+            inputField.hasFocus = true;
+        } else {
+            suggestTabTween = FlxTween.tween(suggestTab, {alpha: 0.3}, 20);
+            suggestText.alpha = 0;
+            
+            FlxTween.tween(inputField, {y: -50}, 0.2, {
+                onComplete: function(lol)
+                {
+                    canOpenConsole = true;
+                }
+            });
+            inputField.hasFocus = false;
+        }
+    }
+
+    if (FlxG.keys.justPressed.ENTER|| controls.ACCEPT){
+        if (consoleOpen){
+            checkInput(inputString);
+        }
+    }
+}
+
+function onInputChange(input:String):Void {
+    FlxG.sound.play(Paths.sound('debugClick'));
+    inputString = input;
+    if (validSuggestions.contains(input.toLowerCase()) && consoleOpen){
+        suggestText.alpha = 0.3;
+    } else {
+        suggestText.alpha = 0;
+    }
+
+}
+
+function checkInput(input:String):Void{
+    // start cutscene
+    canOpenConsole = false;
+    endTime = true;
+    inputField.hasFocus = false;
+    //black2.alpha = 1;
+    ending();
+}
+
+
+function ending():Void{
+    if(playing)return;
+    playing = true;
+    if(hxvlc != "0")
+        video.play();
+    else if(hxcodec == "3.0.0")
+        video.play(Paths.video('Chkdsk Ed'));
+    else
+        video.playVideo(Paths.video('Chkdsk Ed'));
+}
