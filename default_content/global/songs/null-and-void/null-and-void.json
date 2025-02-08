@@ -6474,11 +6474,10 @@
 			]
 		],
 		"gfVersion": "gf",
-		"hudSkin": "pixel-denied",
+		"hudSkin": "pixel",
 		"stage": "nullstage",
 		"needsVoices": true,
 		"sections": 0,
-		"noteStyle": "pixel",
 		"bpm": 190
 	}
 }
