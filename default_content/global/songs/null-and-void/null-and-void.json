@@ -6474,6 +6474,7 @@
 			]
 		],
 		"gfVersion": "gf",
+		"hudSkin": "pixel-denied",
 		"stage": "nullstage",
 		"needsVoices": true,
 		"sections": 0,
